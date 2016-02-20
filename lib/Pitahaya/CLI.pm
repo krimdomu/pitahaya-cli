@@ -14,14 +14,13 @@ sub config {
 
   $ENV{HOME} ||= $ENV{USERPROFILE};
 
-  my @config_locations =
-    ( ".pitahaya/config", "$ENV{HOME}/.pitahaya/config", );
+  my @config_locations = ( ".pitahaya/config", "$ENV{HOME}/.pitahaya/config", );
 
   my ($config_file) = grep { -f } @config_locations;
 
   if ( !$config_file ) {
     print
-"No configuration file found.\nYou have to initialize the repository first.\n";
+      "No configuration file found.\nYou have to initialize the repository first.\n";
     exit 1;
   }
   my $cfg = JSON::XS::decode_json( io($config_file)->slurp );
@@ -217,7 +216,7 @@ sub update_page {
     mkdir dirname $meta_file;
 
     open( my $fh, ">", "$meta_file.tmp" ) or die($!);
-    print $fh $coder->encode( \%ref );
+    print $fh $self->_make_json( \%ref );
     close($fh);
 
     open( $fh, ">", "$content_file.tmp" ) or die($!);
@@ -244,7 +243,7 @@ sub update_page {
 
     open( my $fh, ">", "$meta_file.tmp" ) or die($!);
     binmode( $fh, ":utf8" );
-    print $fh $coder->encode( \%ref );
+    print $fh $self->_make_json( \%ref );
     close($fh);
 
     open( $fh, ">", "$content_file.tmp" ) or die($!);
@@ -319,6 +318,84 @@ sub _print_opts {
   else {
     print " ";
   }
+}
+
+sub _make_json {
+  my ( $self, $ref, $indent ) = @_;
+
+  $indent ||= 0;
+
+  my @ret;
+
+  if ( ref $ref eq "HASH" ) {
+    push @ret, $self->_make_json_hash( $ref, $indent + 2 );
+  }
+  elsif ( ref $ref eq "ARRAY" ) {
+    push @ret, $self->_make_json_array( $ref, $indent + 2 );
+  }
+
+  return join( "\n", @ret );
+}
+
+sub _make_json_hash {
+  my ( $self, $ref, $indent ) = @_;
+
+  my @str = ( ( " " x ( $indent - 2 ) ) . '{' );
+
+  for my $key ( sort keys %{$ref} ) {
+    my $val = $ref->{$key};
+    if ( !defined $val ) {
+      push @str, ( " " x $indent ) . "\"$key\": null,";
+    }
+    elsif ( ref $val eq "HASH" ) {
+      push @str, $self->_make_json_hash( $val, $indent + 2 );
+    }
+    elsif ( ref $val eq "ARRAY" ) {
+      push @str, $self->_make_json_array( $val, $indent + 2 );
+    }
+    elsif ( $val =~ m/^\d+$/ ) {
+      push @str, ( " " x $indent ) . "\"$key\": $val,";
+    }
+    else {
+      $val =~ s/"/\\"/g;
+      push @str, ( " " x $indent ) . "\"$key\": \"$val\",";
+    }
+  }
+
+  $str[-1] =~ s/,$//;
+  push @str, ( " " x ( $indent - 2 ) ) . "}";
+
+  return @str;
+}
+
+sub _make_json_array {
+  my ( $self, $ref, $indent ) = @_;
+
+  my @str = ( ( " " x ( $indent - 2 ) ) . '[' );
+
+  for my $val ( @{$ref} ) {
+    if ( !defined $val ) {
+      push @str, ( " " x $indent ) . "null,";
+    }
+    elsif ( ref $val eq "HASH" ) {
+      push @str, $self->_make_json_hash( $val, $indent += 2 );
+    }
+    elsif ( ref $val eq "ARRAY" ) {
+      push @str, $self->_make_json_array( $val, $indent += 2 );
+    }
+    elsif ( $val =~ m/^\d+$/ ) {
+      push @str, ( " " x $indent ) . "$val,";
+    }
+    else {
+      $val =~ s/"/\\"/g;
+      push @str, ( " " x $indent ) . "\"$val\",";
+    }
+  }
+
+  $str[-1] =~ s/,$//;
+  push @str, ( " " x ( $indent - 2 ) ) . "]";
+
+  return @str;
 }
 
 1;
