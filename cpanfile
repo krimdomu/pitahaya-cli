@@ -15,3 +15,5 @@ requires 'Digest::SHA256';
 requires 'Moo';
 requires 'MooX::Cmd';
 requires 'MooX::Options';
+requires 'Throwable';
+requires 'Hash::Diff';
