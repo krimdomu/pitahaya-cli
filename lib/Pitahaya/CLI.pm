@@ -355,13 +355,15 @@ sub _make_json_hash {
     }
     elsif ( ref $val eq "HASH" ) {
       push @str,
-          ( " " x ($indent) ) . '{' . "\n"
+          ( " " x ($indent) )
+        . "\"$key\": " . '{' . "\n"
         . $self->_make_json_hash( $val, $indent + 2 ) . "\n"
         . ( " " x ($indent) ) . '}';
     }
     elsif ( ref $val eq "ARRAY" ) {
       push @str,
-          ( " " x ($indent) ) . '[' . "\n"
+          ( " " x ($indent) )
+        . "\"$key\": " . '[' . "\n"
         . $self->_make_json_array( $val, $indent + 2 ) . "\n"
         . ( " " x ($indent) ) . ']';
     }
