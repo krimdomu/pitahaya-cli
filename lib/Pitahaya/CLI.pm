@@ -12,16 +12,16 @@ sub execute { }
 sub config {
   my ($self) = @_;
 
-  my @config_locations = (
-    ".pitahaya/config", "$ENV{HOME}/.pitahaya/config",
-    "$ENV{USERPROFILE}/.pitahaya/config"
-  );
+  $ENV{HOME} ||= $ENV{USERPROFILE};
+
+  my @config_locations =
+    ( ".pitahaya/config", "$ENV{HOME}/.pitahaya/config", );
 
   my ($config_file) = grep { -f } @config_locations;
 
   if ( !$config_file ) {
     print
-      "No configuration file found.\nYou have to initialize the repository first.\n";
+"No configuration file found.\nYou have to initialize the repository first.\n";
     exit 1;
   }
   my $cfg = JSON::XS::decode_json( io($config_file)->slurp );
