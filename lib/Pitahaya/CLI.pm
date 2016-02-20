@@ -328,10 +328,16 @@ sub _make_json {
   my @ret;
 
   if ( ref $ref eq "HASH" ) {
-    push @ret, $self->_make_json_hash( $ref, $indent + 2 );
+    push @ret,
+        ( " " x ($indent) ) . '{' . "\n"
+      . $self->_make_json_hash( $ref, $indent + 2 ) . "\n"
+      . ( " " x ($indent) ) . '}';
   }
   elsif ( ref $ref eq "ARRAY" ) {
-    push @ret, $self->_make_json_array( $ref, $indent + 2 );
+    push @ret,
+        ( " " x ($indent) ) . '[' . "\n"
+      . $self->_make_json_array( $ref, $indent + 2 ) . "\n"
+      . ( " " x ($indent) ) . ']';
   }
 
   return join( "\n", @ret );
@@ -340,62 +346,68 @@ sub _make_json {
 sub _make_json_hash {
   my ( $self, $ref, $indent ) = @_;
 
-  my @str = ( ( " " x ( $indent - 2 ) ) . '{' );
+  my @str;
 
   for my $key ( sort keys %{$ref} ) {
     my $val = $ref->{$key};
     if ( !defined $val ) {
-      push @str, ( " " x $indent ) . "\"$key\": null,";
+      push @str, ( " " x $indent ) . "\"$key\": null";
     }
     elsif ( ref $val eq "HASH" ) {
-      push @str, $self->_make_json_hash( $val, $indent + 2 );
+      push @str,
+          ( " " x ($indent) ) . '{' . "\n"
+        . $self->_make_json_hash( $val, $indent + 2 ) . "\n"
+        . ( " " x ($indent) ) . '}';
     }
     elsif ( ref $val eq "ARRAY" ) {
-      push @str, $self->_make_json_array( $val, $indent + 2 );
+      push @str,
+          ( " " x ($indent) ) . '[' . "\n"
+        . $self->_make_json_array( $val, $indent + 2 ) . "\n"
+        . ( " " x ($indent) ) . ']';
     }
     elsif ( $val =~ m/^\d+$/ ) {
-      push @str, ( " " x $indent ) . "\"$key\": $val,";
+      push @str, ( " " x $indent ) . "\"$key\": $val";
     }
     else {
       $val =~ s/"/\\"/g;
-      push @str, ( " " x $indent ) . "\"$key\": \"$val\",";
+      push @str, ( " " x $indent ) . "\"$key\": \"$val\"";
     }
   }
 
-  $str[-1] =~ s/,$//;
-  push @str, ( " " x ( $indent - 2 ) ) . "}";
-
-  return @str;
+  return join( ",\n", @str );
 }
 
 sub _make_json_array {
   my ( $self, $ref, $indent ) = @_;
 
-  my @str = ( ( " " x ( $indent - 2 ) ) . '[' );
+  my @str;
 
   for my $val ( @{$ref} ) {
     if ( !defined $val ) {
-      push @str, ( " " x $indent ) . "null,";
+      push @str, ( " " x $indent ) . "null";
     }
     elsif ( ref $val eq "HASH" ) {
-      push @str, $self->_make_json_hash( $val, $indent += 2 );
+      push @str,
+          ( " " x ($indent) ) . '{' . "\n"
+        . $self->_make_json_hash( $val, $indent + 2 ) . "\n"
+        . ( " " x ($indent) ) . '}';
     }
     elsif ( ref $val eq "ARRAY" ) {
-      push @str, $self->_make_json_array( $val, $indent += 2 );
+      push @str,
+          ( " " x ($indent) ) . '[' . "\n"
+        . $self->_make_json_array( $val, $indent + 2 ) . "\n"
+        . ( " " x ($indent) ) . ']';
     }
     elsif ( $val =~ m/^\d+$/ ) {
-      push @str, ( " " x $indent ) . "$val,";
+      push @str, ( " " x $indent ) . "$val";
     }
     else {
       $val =~ s/"/\\"/g;
-      push @str, ( " " x $indent ) . "\"$val\",";
+      push @str, ( " " x $indent ) . "\"$val\"";
     }
   }
 
-  $str[-1] =~ s/,$//;
-  push @str, ( " " x ( $indent - 2 ) ) . "]";
-
-  return @str;
+  return join( ",\n", @str );
 }
 
 1;
