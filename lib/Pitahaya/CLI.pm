@@ -1,4 +1,7 @@
 package Pitahaya::CLI;
+
+# ABSTRACT: CLI Tool to interact with Pitahaya-CMS
+
 use IO::All;
 use Moo;
 use MooX::Cmd;
